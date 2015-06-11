@@ -1,3 +1,4 @@
 *.swp
 data/
 data_test/
+*.pyc

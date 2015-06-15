@@ -4,10 +4,8 @@ import os
 
 #### parameters #######
 # directory containing the raw data 
-datadir = os.path.join("..", "data_test")
-# vehicle detector station to keep (i.e. discard all other messages)
-SENSOR_TO_KEEP = 402814 
-
+datadir = os.path.join("..", "data")
+TOPIC = 'fun'
 
 def main():
 
@@ -20,11 +18,8 @@ def main():
         print "Processing file '%s'" % filename
         with open(os.path.join(datadir, filename)) as f:
             for row in f:
-                print row
-                # produce messages of specified sensor
-                if str(SENSOR_TO_KEEP) in row:
-                    print "submitting message to Kafka: %s" % row  # FIXME logger here
-                    producer.send_messages("test-topic", row)
+                # print "submitting message to Kafka: %s" % row  # FIXME logger here
+                producer.send_messages(TOPIC, row)
 
 
 if __name__ == "__main__":

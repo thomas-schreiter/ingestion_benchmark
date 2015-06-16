@@ -42,7 +42,22 @@ def store_prod_msg(msg_id, topic, producer,
          "VALUES (%d, '%s', '%s', '%s', '%s'); " 
          % (msg_id, topic, producer, 
          _to_timestamp(produced_at), _to_timestamp(exp_started_at)))
+    cur.execute(s)
     print s
     con.commit()
 
+
+def store_con_msg(msg_id, topic, consumer, broker, 
+                  consumed_at, exp_started_at):
+    """ strore message by consumer in DB"""
+    con = get_connection()
+    cur = get_cursor(con)
+    s = ("INSERT INTO ConsumedMsg "
+         "(msg_id, topic, consumer, broker, consumed_at, exp_started_at) "
+         "VALUES (%d, '%s', '%s', '%s', '%s', '%s'); " 
+         % (msg_id, topic, consumer, broker, 
+         _to_timestamp(consumed_at), _to_timestamp(exp_started_at)))
+    cur.execute(s)
+    print s
+    con.commit()
 

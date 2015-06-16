@@ -27,6 +27,7 @@ def get_cursor(con=None):
 
 def _to_timestamp(dt):
     """ convert date time to MySQL timestamp string """
+    assert dt is not None
     assert isinstance(dt, datetime.datetime)
     ts = dt.strftime("%Y-%m-%d %H:%M:%S.%f")
     return ts

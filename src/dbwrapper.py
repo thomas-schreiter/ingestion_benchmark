@@ -42,22 +42,22 @@ def _insert(insertstr):
     con.commit()
 
 
-def store_prod_msg(msg_id, topic, producer, 
+def store_prod_msg(seq, topic, producer, 
                    produced_at, exp_started_at):
     """ store message by producer in DB"""
     s = ("INSERT INTO ProducedMsg "
-         "(msg_id, topic, producer, produced_at, exp_started_at) "
+         "(seq, topic, producer, produced_at, exp_started_at) "
          "VALUES (%d, '%s', '%s', '%s', '%s'); " 
-         % (msg_id, topic, producer, 
+         % (seq, topic, producer, 
          _to_timestamp(produced_at), _to_timestamp(exp_started_at)))
     _insert(s)
 
-def store_con_msg(msg_id, topic, consumer, broker, 
+def store_con_msg(seq, topic, consumer, broker, 
                   consumed_at, exp_started_at):
     """ store message by consumer in DB"""
     s = ("INSERT INTO ConsumedMsg "
-         "(msg_id, topic, consumer, broker, consumed_at, exp_started_at) "
+         "(seq, topic, consumer, broker, consumed_at, exp_started_at) "
          "VALUES (%d, '%s', '%s', '%s', '%s', '%s'); " 
-         % (msg_id, topic, consumer, broker, 
+         % (seq, topic, consumer, broker, 
          _to_timestamp(consumed_at), _to_timestamp(exp_started_at)))
     _insert(s)

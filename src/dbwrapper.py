@@ -32,32 +32,32 @@ def _to_timestamp(dt):
     return ts
 
 
-def store_prod_msg(msg_id, topic, producer, 
-                   produced_at, exp_started_at):
-    """ strore message by producer in DB"""
+def _insert(insertstr):
+    """ execute string on db, execstr must be INSERT statement"""
+    assert "insert" in insertstr.lower()
     con = get_connection()
     cur = get_cursor(con)
+    cur.execute(insertstr)
+    print insertstr
+    con.commit()
+
+
+def store_prod_msg(msg_id, topic, producer, 
+                   produced_at, exp_started_at):
+    """ store message by producer in DB"""
     s = ("INSERT INTO ProducedMsg "
          "(msg_id, topic, producer, produced_at, exp_started_at) "
          "VALUES (%d, '%s', '%s', '%s', '%s'); " 
          % (msg_id, topic, producer, 
          _to_timestamp(produced_at), _to_timestamp(exp_started_at)))
-    cur.execute(s)
-    print s
-    con.commit()
-
+    _insert(s)
 
 def store_con_msg(msg_id, topic, consumer, broker, 
                   consumed_at, exp_started_at):
-    """ strore message by consumer in DB"""
-    con = get_connection()
-    cur = get_cursor(con)
+    """ store message by consumer in DB"""
     s = ("INSERT INTO ConsumedMsg "
          "(msg_id, topic, consumer, broker, consumed_at, exp_started_at) "
          "VALUES (%d, '%s', '%s', '%s', '%s', '%s'); " 
          % (msg_id, topic, consumer, broker, 
          _to_timestamp(consumed_at), _to_timestamp(exp_started_at)))
-    cur.execute(s)
-    print s
-    con.commit()
-
+    _insert(s)

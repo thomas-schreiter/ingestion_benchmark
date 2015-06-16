@@ -5,3 +5,4 @@ data_test/
 src/~consumer_test.out
 src/nohup.out
 log/
+hello/.idea/

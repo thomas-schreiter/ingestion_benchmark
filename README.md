@@ -13,10 +13,12 @@ Kafka vs. Kinesis
 
 ## 1 producer node
 - python producers
+- python-mysqldb
 - git
 
 ## 1 consumer node
 - python consumers
+- python-mysqldb
 - git
 
 ## 1 metrics node

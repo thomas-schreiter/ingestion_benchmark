@@ -1,5 +1,7 @@
 from flask import Flask
 import dbwrapper
+import prettytable
+import string
 
 app = Flask(__name__)
 
@@ -11,14 +13,20 @@ def hello():
 
 @app.route("/prod")
 def prod():
-    # TODO query db for all results
+    """ show whole ProducedMsg table on the web """ 
     query = "SELECT * FROM ProducedMsg;"
-    con = dbwrapper.get_connection()
-    cur = dbwrapper.get_cursor(con)
-    cur.execute(query)
-    rows = cur.fetchall()
-    con.close()
-    return str(rows)
+    tablestr = dbwrapper._query_pretty(query)
+    result = string.replace(str(tablestr),'\n','<br>')
+    return result
+
+@app.route("/con")
+def con():
+    """ show whole ConsumedMsg table on the web """
+    query = "SELECT * FROM ConsumedMsg;"
+    tablestr = dbwrapper._query_pretty(query)
+    result = string.replace(str(tablestr),'\n','<br>')
+    return result
+
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', debug=True)

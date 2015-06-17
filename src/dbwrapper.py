@@ -1,5 +1,6 @@
 import MySQLdb as mdb
 import datetime
+import prettytable
 
 USER = 'ubuntu'
 HOST = '52.8.205.143'
@@ -53,6 +54,7 @@ def store_prod_msg(seq, topic, producer,
          _to_timestamp(produced_at), _to_timestamp(exp_started_at)))
     _insert(s)
 
+
 def store_con_msg(seq, topic, consumer, broker, 
                   consumed_at, exp_started_at):
     """ store message by consumer in DB"""
@@ -62,3 +64,21 @@ def store_con_msg(seq, topic, consumer, broker,
          % (seq, topic, consumer, broker, 
          _to_timestamp(consumed_at), _to_timestamp(exp_started_at)))
     _insert(s)
+
+
+def _query_pretty(querystr):
+    con = get_connection()
+    cur = get_cursor(con)
+    cur.execute(querystr)
+    rows = cur.fetchall()
+    header = False
+    for row in rows:
+        if not header:
+            x = prettytable.PrettyTable(list(row.keys()))
+            x.padding_width = 1
+            header = True
+        x.add_row(list(row.values()))
+    con.close()
+    return str(x)
+
+

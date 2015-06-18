@@ -3,6 +3,9 @@ import os
 import dbwrapper
 import datetime
 import parse
+from boto import kinesis
+import time
+
 
 #### parameters #######
 DEFAULT_TOPIC = "defaulttopic"
@@ -11,6 +14,11 @@ DEFAULT_LOG_INTERVAL = int(1e5)
 
 #### kafka config ######
 KAFKAHOST = "52.8.85.143:9092"
+
+#### kinesis config ####
+REGION = "us-west-2"  # for some reason, us-west-1 doesn't work
+SLEEP_IN_SEC = 0.2
+NUM_SHARDS = 1
 
 
 class Message():
@@ -33,7 +41,6 @@ class Message():
     
     @classmethod
     def from_string(cls, msgstr):
-        print msgstr
         fmt = "Message seq={seq}, time={created_at}, producer={prodname}"
         r = parse.parse(fmt, msgstr)
         msg = Message(
@@ -43,12 +50,16 @@ class Message():
         return msg
 
 
-def producer(num_msg=DEFAULT_NUM_MSG, 
-             topic=DEFAULT_TOPIC, 
-             producer_name='default_producer',
-             log_interval=DEFAULT_LOG_INTERVAL,
-             exp_started_at=None):
+def producer_kafka(num_msg=DEFAULT_NUM_MSG, 
+                   topic=DEFAULT_TOPIC, 
+                   producer_name='default_kafka_producer',
+                   log_interval=DEFAULT_LOG_INTERVAL,
+                   exp_started_at=None):
     """ producer process sending messages to the brokers """
+    # FIXME exp_started_at should be set by runner
+    if exp_started_at is None:
+        exp_started_at = datetime.datetime.now()
+
     # get Kafka connection
     kafka_client = kafka.KafkaClient(KAFKAHOST) 
     producer = kafka.SimpleProducer(kafka_client, async=False)  # FIXME sync vs. async?
@@ -71,25 +82,36 @@ def producer(num_msg=DEFAULT_NUM_MSG,
 
 def producer_kinesis(num_msg=DEFAULT_NUM_MSG, 
                      topic=DEFAULT_TOPIC, 
-                     producer_name='default_producer',
+                     producer_name='default_kinesis_producer',
                      log_interval=DEFAULT_LOG_INTERVAL,
                      exp_started_at=None):
-    # TODO stream name
-    python python.py my-first-stream
+    # FIXME exp_started_at should be set by runner
+    if exp_started_at is None:
+        exp_started_at = datetime.datetime.now()
+
+    # create connection to Kinesis and stream
+    kin = kinesis.connect_to_region(REGION)
+    try: 
+        stream = kin.create_stream(topic, NUM_SHARDS)
+        # TODO wait until stream is ACTIVE
+    except kinesis.exceptions.ResourceInUseException:
+        pass  # stream already exists, do nothing
     
-    # TODO prep messages
+    for seq in range(num_msg):
+        # send message to Kinesis
+        msg = Message(seq, producer_name)
+        kin.put_record(topic, str(msg), "partition_key")
+        # TODO log
+        if seq % log_interval == 0 :
+            dbwrapper.store_prod_msg(
+                msg.seq, topic, producer_name,
+                msg.created_at, exp_started_at)  # FIXME run as background process
+            print "Sent message #%d to Kinesis" % seq
 
-    # TODO send messages
 
-    # TODO log
-
-    # TODO merge with function above
-
-
-# TODO expand for Kinesis
 def consumer(topic=DEFAULT_TOPIC, 
              broker='kafka',
-             consumer_name='default_consumer',
+             consumer_name='default_kafka_consumer',
              consumer_group='default_group',
              log_interval=DEFAULT_LOG_INTERVAL,
              exp_started_at=None):
@@ -113,6 +135,46 @@ def consumer(topic=DEFAULT_TOPIC,
                 msg.seq, topic, consumer_name, broker,
                 consumed_at, exp_started_at)  # FIXME run as background process
             print "Read message #%d from Kafka" % msg.seq
+
+
+def consumer_kinesis(topic=DEFAULT_TOPIC, 
+             broker='kinesis',
+             consumer_name='default_kinesis_consumer',
+             log_interval=DEFAULT_LOG_INTERVAL,
+             exp_started_at=None):
+    """ consumer process receiving messages from the brokers """
+    # get Kafka connection
+    kin = kinesis.connect_to_region(REGION)
+
+    # FIXME exp_started_at should be set by runner
+    if exp_started_at is None:
+        exp_started_at = datetime.datetime.now()
+
+    # listen to stream forever
+    shard_id = 'shardId-000000000000'
+    starting_sequence = "LATEST"  # or: TRIM_HORIZON to start from beginning
+    shard_it = kin.get_shard_iterator(topic, shard_id, starting_sequence)["ShardIterator"]
+    while True:
+        # read next message
+        out = kin.get_records(shard_it, limit=1)
+        shard_it = out["NextShardIterator"]
+        consumed_at = datetime.datetime.now()
+        try:
+            raw = out["Records"][0]["Data"]
+        except IndexError:
+            raw = None
+
+        # log
+        if (raw is not None):
+            msg = Message.from_string(raw)
+            if msg.seq % log_interval == 0:
+                dbwrapper.store_con_msg(
+                    msg.seq, topic, consumer_name, broker,
+                    consumed_at, exp_started_at)  # FIXME run as background process
+                print "Read message #%d from Kinesis" % msg.seq
+
+        # wait a bit before requesting next chunk, otherwise AWS will cut it off
+        time.sleep(SLEEP_IN_SEC)
 
 
 # TODO: some sort of runner

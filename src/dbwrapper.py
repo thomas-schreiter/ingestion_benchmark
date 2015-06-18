@@ -81,4 +81,3 @@ def _query_pretty(querystr):
     con.close()
     return str(x)
 
-

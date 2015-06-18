@@ -69,6 +69,23 @@ def producer(num_msg=DEFAULT_NUM_MSG,
             print "Sent message #%d to Kafka" % seq
 
 
+def producer_kinesis(num_msg=DEFAULT_NUM_MSG, 
+                     topic=DEFAULT_TOPIC, 
+                     producer_name='default_producer',
+                     log_interval=DEFAULT_LOG_INTERVAL,
+                     exp_started_at=None):
+    # TODO stream name
+    python python.py my-first-stream
+    
+    # TODO prep messages
+
+    # TODO send messages
+
+    # TODO log
+
+    # TODO merge with function above
+
+
 # TODO expand for Kinesis
 def consumer(topic=DEFAULT_TOPIC, 
              broker='kafka',

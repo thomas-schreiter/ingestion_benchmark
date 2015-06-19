@@ -7,3 +7,5 @@ src/nohup.out
 log/
 hello/.idea/
 Untitled*
+.ipynb*
+*.ipynb

@@ -45,23 +45,27 @@ def _insert(insertstr):
 
 
 def store_prod_msg(seq, topic, producer, 
-                   produced_at, exp_started_at):
+                   produced_at, throughput, exp_started_at):
     """ store message by producer in DB"""
+    if throughput is None:
+        throughput = 'NULL'
     s = ("INSERT INTO ProducedMsg "
-         "(seq, topic, producer, produced_at, exp_started_at) "
-         "VALUES (%d, '%s', '%s', '%s', '%s'); " 
-         % (seq, topic, producer, 
+         "(seq, topic, producer, throughput_msg_per_sec, produced_at, exp_started_at) "
+         "VALUES (%d, '%s', '%s', %s, '%s', '%s'); " 
+         % (seq, topic, producer, throughput, 
          _to_timestamp(produced_at), _to_timestamp(exp_started_at)))
     _insert(s)
 
 
 def store_con_msg(seq, topic, consumer, broker, 
-                  consumed_at, exp_started_at):
+                  consumed_at, throughput, exp_started_at):
     """ store message by consumer in DB"""
+    if throughput is None:
+        throughput = 'NULL'
     s = ("INSERT INTO ConsumedMsg "
-         "(seq, topic, consumer, broker, consumed_at, exp_started_at) "
-         "VALUES (%d, '%s', '%s', '%s', '%s', '%s'); " 
-         % (seq, topic, consumer, broker, 
+         "(seq, topic, consumer, broker, throughput_msg_per_sec, consumed_at, exp_started_at) "
+         "VALUES (%d, '%s', '%s', '%s', %s, '%s', '%s'); " 
+         % (seq, topic, consumer, broker, throughput, 
          _to_timestamp(consumed_at), _to_timestamp(exp_started_at)))
     _insert(s)
 

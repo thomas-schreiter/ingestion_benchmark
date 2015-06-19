@@ -7,6 +7,12 @@ from boto import kinesis
 import time
 
 
+""" General producer and consumer logic for benchmark. 
+
+Use the producer() and consumer() functions 
+"""
+
+
 #### parameters #######
 DEFAULT_TOPIC = "defaulttopic"
 DEFAULT_NUM_MSG = int(1e8)
@@ -71,43 +77,48 @@ class Logger():
         self.prev_seq = None
         self.prev_time = None
 
-    def log(self, seq, time):
+    def log(self, msg, time):
         # only log first entry or every `log_interval` steps
-        if self.prev_seq is not None and seq - self.prev_seq < self.log_interval:
+        if self.prev_seq is not None and msg.seq - self.prev_seq < self.log_interval:
             return
 
         # calculate throughput
         if self.prev_seq is not None:
-            diff_seq = self.prev_seq - seq
+            diff_seq = self.prev_seq - msg.seq
             diff_time = self.prev_time - time
             throughput = diff_seq / diff_time.total_seconds()
         else: 
             throughput = None
 
+        # calculate delay
+        if self.prodcon_type == 'consumer':
+            delay = time - msg.created_at
+            
         # update fields
-        self.prev_seq = seq
+        self.prev_seq = msg.seq
         self.prev_time = time
 
         # store result in db
         if self.prodcon_type == 'producer':
             dbwrapper.store_prod_msg(
-                seq=seq, 
+                seq=msg.seq, 
                 topic=self.topic, 
                 producer=self.prodcon_name,
                 produced_at=time, 
                 throughput=throughput, 
                 exp_started_at=self.exp_started_at)
-            print "Sent message #%d to %s" % (seq, self.broker)
+            print "Sent message #%d to %s" % (msg.seq, self.broker)
         elif self.prodcon_type == 'consumer':
             dbwrapper.store_con_msg(
-                seq=seq, 
+                seq=msg.seq, 
                 topic=self.topic, 
                 consumer=self.prodcon_name, 
                 broker=self.broker,
                 consumed_at=time,
                 throughput=throughput,
+                delay=delay,
                 exp_started_at=self.exp_started_at) 
-            print "Read message #%d from %s" % (seq, self.broker)
+            print "Read message #%d from %s" % (msg.seq, self.broker)
         else:
             assert False
 
@@ -184,7 +195,7 @@ class Kafka(Broker):
             msg = Message.from_string(raw.message.value)
 
             # log
-            logger.log(msg.seq, consumed_at)
+            logger.log(msg, consumed_at)
 
 
 class Kinesis(Broker):
@@ -222,7 +233,7 @@ class Kinesis(Broker):
             # log
             if (raw is not None):
                 msg = Message.from_string(raw)
-                logger.log(msg.seq, consumed_at)  
+                logger.log(msg, consumed_at)  
 
             # wait a bit before requesting next chunk, otherwise AWS will cut it off
             time.sleep(SLEEP_IN_SEC)
@@ -234,7 +245,8 @@ def producer(brokertype,
              producer_name=None,
              log_interval=DEFAULT_LOG_INTERVAL,
              exp_started_at=None):
-    
+    """ api for general producer """
+    # initialize broker and logger
     broker = Broker.create(brokertype, topic)
     logger = Logger('producer', producer_name, brokertype, topic, log_interval, exp_started_at=None)
     
@@ -242,7 +254,7 @@ def producer(brokertype,
     for seq in range(num_msg):
         msg = Message(seq, producer_name)
         broker.send_message(msg)
-        logger.log(msg.seq, msg.created_at)
+        logger.log(msg, msg.created_at)
 
 
 def consumer(brokertype,
@@ -251,10 +263,13 @@ def consumer(brokertype,
              consumer_group='default_group',
              log_interval=DEFAULT_LOG_INTERVAL,
              exp_started_at=None):
-    
+    """ api for general consumer """
+    # initialize broker and logger
     broker = Broker.create(brokertype, topic)
     logger = Logger('consumer', consumer_name, brokertype, topic, log_interval, exp_started_at=None)
    
+    # comsumer logic is quite different between the brokers 
+    # logging is inside the consume_forever methods
     broker.consume_forever(logger)
 
 

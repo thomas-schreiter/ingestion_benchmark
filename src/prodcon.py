@@ -123,43 +123,6 @@ class Logger():
             assert False
 
 
-def get_broker_connection(broker):
-    broker = broker.lower()
-    if broker == 'kafka':
-        con = kafka.KafkaClient(KAFKAHOST)
-    elif broker == 'kinesis':
-        con = kinesis.connect_to_region(REGION)
-    else:
-        assert False
-    return con
-
-
-def get_stream(broker, con, topic=None):
-    broker = broker.lower()
-    if broker == 'kafka':
-        stream = kafka.SimpleProducer(con, async=False)  # FIXME sync vs. async?
-    elif broker == 'kinesis':
-        try: 
-            stream = con.create_stream(topic, NUM_SHARDS)
-            # TODO wait until stream is ACTIVE
-        except kinesis.exceptions.ResourceInUseException:
-            pass  # stream already exists, do nothing
-    else:
-        assert False
-    assert stream is not None
-    return stream
-
-
-def send_message(broker, stream_or_con, topic, msg):
-    broker = broker.lower()
-    if broker == 'kafka':
-         stream_or_con.send_messages(topic, str(msg))
-    elif broker == 'kinesis':
-         stream_or_con.put_record(topic, str(msg), "partition_key")    
-    else:
-        assert False
-
-
 class Broker():
     
     @classmethod
@@ -280,6 +243,3 @@ def consumer(brokertype,
     # logging is inside the consume_forever methods
     broker.consume_forever(logger)
 
-
-# TODO: some sort of runner
-# TODO: runner must create topic

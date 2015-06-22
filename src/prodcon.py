@@ -23,7 +23,7 @@ KAFKAHOST = "52.8.85.143:9092"
 
 #### kinesis config ####
 REGION = "us-west-2"  # for some reason, us-west-1 doesn't work
-SLEEP_IN_SEC = 0.2
+SLEEP_IN_SEC = 0.1
 NUM_SHARDS = 1
 
 
@@ -163,19 +163,19 @@ def send_message(broker, stream_or_con, topic, msg):
 class Broker():
     
     @classmethod
-    def create(cls, brokertype, topic):
+    def create(cls, brokertype, topic, *args, **kwargs):
         brokertype = brokertype.lower()
         if brokertype == 'kafka':
-            return Kafka(topic)
+            return Kafka(topic, *args, **kwargs)
         elif brokertype == 'kinesis':
-            return Kinesis(topic)
+            return Kinesis(topic, *args, **kwargs)
         else:
             assert False
 
 
 class Kafka(Broker):
 
-    def __init__(self, topic):
+    def __init__(self, topic, *args, **kwargs):
         self.con = kafka.KafkaClient(KAFKAHOST)
         self.topic = topic
         self.client = kafka.SimpleProducer(self.con, async=False)  # FIXME sync vs. async?
@@ -199,14 +199,20 @@ class Kafka(Broker):
 
 
 class Kinesis(Broker):
-    
-    def __init__(self, topic):
-        self.topic = topic
+    # TODO clean up interface of __init__ and Broker.crate()   
+    def __init__(self, topic, *args, **kwargs):
         self.con = kinesis.connect_to_region(REGION)
+        try:
+            self.num_shards = kwargs["num_shards"]
+        except:
+            self.num_shards = 1
+        print "Set number of shards to {}".format(self.num_shards)
+        self.topic = "{}Shard".format(self.num_shards)
+
         try: 
-            self.stream = self.con.create_stream(topic, NUM_SHARDS)
+            self.stream = self.con.create_stream(self.topic, self.num_shards)
             print "Creating Kinesis stream ...."
-            time.sleep(30)  # TODO wait until stream is ACTIVE, 30 seconds feels ok
+            time.sleep(60)  # wait until stream is ACTIVE, 60 seconds feels ok
         except kinesis.exceptions.ResourceInUseException:
             pass  # stream already exists, do nothing
 
@@ -244,10 +250,11 @@ def producer(brokertype,
              topic=DEFAULT_TOPIC, 
              producer_name=None,
              log_interval=DEFAULT_LOG_INTERVAL,
-             exp_started_at=None):
+             exp_started_at=None,
+             num_shards=None):
     """ api for general producer """
     # initialize broker and logger
-    broker = Broker.create(brokertype, topic)
+    broker = Broker.create(brokertype, topic, num_shards=num_shards)
     logger = Logger('producer', producer_name, brokertype, topic, log_interval, exp_started_at=None)
     
     # bombard the broker with messages
@@ -262,10 +269,11 @@ def consumer(brokertype,
              consumer_name=None,
              consumer_group='default_group',
              log_interval=DEFAULT_LOG_INTERVAL,
-             exp_started_at=None):
+             exp_started_at=None,
+             num_shards=None):
     """ api for general consumer """
     # initialize broker and logger
-    broker = Broker.create(brokertype, topic)
+    broker = Broker.create(brokertype, topic, num_shards=num_shards)
     logger = Logger('consumer', consumer_name, brokertype, topic, log_interval, exp_started_at=None)
    
     # comsumer logic is quite different between the brokers 

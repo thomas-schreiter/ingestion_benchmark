@@ -22,7 +22,7 @@ DEFAULT_LOG_INTERVAL = int(1e5)
 KAFKAHOST = "52.8.85.143:9092"
 
 #### kinesis config ####
-REGION = "us-west-2"  # for some reason, us-west-1 doesn't work
+REGION = "us-west-1"  # for some reason, us-west-1 doesn't work
 SLEEP_IN_SEC = 0.1
 NUM_SHARDS = 1
 
@@ -171,13 +171,23 @@ class Kinesis(Broker):
             self.num_shards = 1
         print "Set number of shards to {}".format(self.num_shards)
         self.topic = "{}Shard".format(self.num_shards)
+        self._create_stream()
 
-        try: 
-            self.stream = self.con.create_stream(self.topic, self.num_shards)
-            print "Creating Kinesis stream ...."
-            time.sleep(60)  # wait until stream is ACTIVE, 60 seconds feels ok
+    def _create_stream(self):
+        try:
+            # check whether stream already exists
+            desc = self.con.describe_stream(self.topic)
+            actual_num_shards = len(desc["StreamDescription"]["Shards"])
+            if self.num_shards is not None:
+                assert actual_num_shards == self.num_shards, \
+                    "Kinesis stream %s alredy exists with %d shards!!" % (self.topic, actual_num_shards)
+            print "Kinesis stream %s already exists (%d shards)" % (self.topic, actual_num_shards)
+            self.num_shards = actual_num_shards
+
         except kinesis.exceptions.ResourceInUseException:
-            pass  # stream already exists, do nothing
+            self.stream = self.con.create_stream(self.topic, self.num_shards)
+            print "Creating Kinesis stream; wait 60 sec to let AWS create stream ...."
+            time.sleep(60)  # wait until stream is ACTIVE, 60 seconds feels ok
 
     def send_message(self, msg):
         self.con.put_record(self.topic, str(msg), "partition_key")

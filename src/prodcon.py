@@ -22,7 +22,7 @@ DEFAULT_LOG_INTERVAL = int(1e5)
 KAFKAHOST = "52.8.85.143:9092"
 
 #### kinesis config ####
-REGION = "us-west-1"  # for some reason, us-west-1 doesn't work
+REGION = "us-west-1"  # in order to use us-west-1, modify the boto's endpoints.json file
 SLEEP_IN_SEC = 0.1
 NUM_SHARDS = 1
 

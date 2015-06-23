@@ -198,7 +198,7 @@ class Kinesis(Broker):
         record = {'Data': str(msg), 'PartitionKey': str(hash(msg.seq))}
         self.msg_bulk.append(record)
         if len(self.msg_bulk) >= self.bulk_size:    
-            self.con.put_records(self.msg_bulk, self.topic, "partition_key")
+            self.con.put_records(self.msg_bulk, self.topic)
             self.msg_bulk = []             
 
     def consume_forever(self, logger):

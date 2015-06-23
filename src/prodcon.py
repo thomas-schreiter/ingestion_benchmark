@@ -169,6 +169,11 @@ class Kinesis(Broker):
             self.num_shards = kwargs["num_shards"]
         except:
             self.num_shards = 1
+	try: 
+            self.bulk_size = kwargs["bulk_size"]
+	except:
+	    self.bulk_size = 1
+	self.msg_bulk = []
         print "Set number of shards to {}".format(self.num_shards)
         self.topic = "{}Shard".format(self.num_shards)
         self._create_stream()
@@ -190,7 +195,11 @@ class Kinesis(Broker):
             time.sleep(60)  # wait until stream is ACTIVE, 60 seconds feels ok
 
     def send_message(self, msg):
-        self.con.put_record(self.topic, str(msg), "partition_key")
+        record = {'Data': str(msg), 'PartitionKey': str(hash(msg.seq))}
+        self.msg_bulk.append(record)
+        if len(self.msg_bulk) >= self.bulk_size:    
+            self.con.put_records(self.msg_bulk, self.topic, "partition_key")
+            self.msg_bulk = []             
 
     def consume_forever(self, logger):
         """ consumer process receiving messages from the brokers """
@@ -224,7 +233,8 @@ def producer(brokertype,
              producer_name=None,
              log_interval=DEFAULT_LOG_INTERVAL,
              exp_started_at=None,
-             num_shards=None):
+             num_shards=None,
+	     bulk_size=None):
     """ api for general producer """
     # initialize broker and logger
     broker = Broker.create(brokertype, topic, num_shards=num_shards)
@@ -243,10 +253,11 @@ def consumer(brokertype,
              consumer_group='default_group',
              log_interval=DEFAULT_LOG_INTERVAL,
              exp_started_at=None,
-             num_shards=None):
+             num_shards=None,
+             bulk_size=None):
     """ api for general consumer """
     # initialize broker and logger
-    broker = Broker.create(brokertype, topic, num_shards=num_shards)
+    broker = Broker.create(brokertype, topic, num_shards=num_shards, bulk_size=bulk_size)
     logger = Logger('consumer', consumer_name, brokertype, topic, log_interval, exp_started_at=None)
    
     # comsumer logic is quite different between the brokers 

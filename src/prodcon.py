@@ -198,6 +198,7 @@ class Kinesis(Broker):
         record = {'Data': str(msg), 'PartitionKey': str(hash(msg.seq))}
         self.msg_bulk.append(record)
         if len(self.msg_bulk) >= self.bulk_size:    
+            print "Sending %d messages to Kinesis Steam %s ..." % (len(self.msg_bulk), self.topic)
             self.con.put_records(self.msg_bulk, self.topic)
             self.msg_bulk = []             
 
@@ -237,7 +238,7 @@ def producer(brokertype,
 	     bulk_size=None):
     """ api for general producer """
     # initialize broker and logger
-    broker = Broker.create(brokertype, topic, num_shards=num_shards)
+    broker = Broker.create(brokertype, topic, num_shards=num_shards, bulk_size=bulk_size)
     logger = Logger('producer', producer_name, brokertype, topic, log_interval, exp_started_at=None)
     
     # bombard the broker with messages
@@ -254,7 +255,7 @@ def consumer(brokertype,
              log_interval=DEFAULT_LOG_INTERVAL,
              exp_started_at=None,
              num_shards=None,
-             bulk_size=None):
+             bulk_size=1):
     """ api for general consumer """
     # initialize broker and logger
     broker = Broker.create(brokertype, topic, num_shards=num_shards, bulk_size=bulk_size)

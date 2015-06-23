@@ -168,12 +168,12 @@ class Kinesis(Broker):
         try:
             self.num_shards = kwargs["num_shards"]
         except:
-            self.num_shards = None
+            self.num_shards = 1
         print "Set number of shards to {}".format(self.num_shards)
         self.topic = "{}Shard".format(self.num_shards)
         self._create_stream()
 
-    def _create_stream():
+    def _create_stream(self):
         try:
             # check whether stream already exists
             desc = self.con.describe_stream(self.topic)

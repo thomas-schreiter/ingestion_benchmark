@@ -2,7 +2,7 @@ import sys
 import os
 sys.path.append(os.path.join('..', 'src'))
 
-from flask import Flask
+from flask import Flask, render_template
 import dbwrapper
 import prettytable
 import string
@@ -31,6 +31,10 @@ def con():
     result = string.replace(str(tablestr),'\n','<br>')
     return result
 
+@app.route("/bootstrap_hello")
+def bootstrap_hello():
+    """ show a super simple example of a bootstrapped page """
+    return render_template('Bootstrap_hello.html')
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', debug=True)

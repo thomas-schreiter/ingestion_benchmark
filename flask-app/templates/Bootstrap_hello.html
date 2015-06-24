@@ -79,25 +79,27 @@
       $(function () { 
         $('#container_hc').highcharts({
             chart: {
-                type: 'bar'
+                type: 'column'
             },
             title: {
-                text: 'Fruit Consumption'
+                text: 'Throughput'
             },
             xAxis: {
-                categories: ['Apples', 'Bananas', 'Oranges']
+                categories: ['1 partition', '2 partitions', '3 partitions', '4 partitions']
             },
             yAxis: {
                 title: {
-                    text: 'Fruit eaten'
+                    text: 'Throughput [#msg/sec]'
                 }
             },
             series: [{
-                name: 'Jane',
-                data: [1, 0, 4]
+                name: 'Kafka',
+                data: [1150, 1170, 1130, 1150],
+                color: '#3a3a39'
             }, {
-                name: 'John',
-                data: [5, 7, 3]
+                name: 'Kinesis',
+                data: [6000, 5000, 4000, 3000],
+                color: '#D68B00'
             }]
         });
       });

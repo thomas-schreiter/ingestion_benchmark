@@ -152,6 +152,7 @@ class Kafka(Broker):
         consumer_group='default_group'
         self.consumer = kafka.SimpleConsumer(self.con, consumer_group, self.topic)
 
+ 	# TODO check out self.con.get_messages(count=1000) to send messages in bulk
         # read from Kafka
         for raw in self.consumer:
             consumed_at = datetime.datetime.now()

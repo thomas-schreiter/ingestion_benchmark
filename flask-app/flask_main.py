@@ -1,3 +1,7 @@
+import sys
+import os
+sys.path.append(os.path.join('..', 'src'))
+
 from flask import Flask
 import dbwrapper
 import prettytable

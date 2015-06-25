@@ -79,7 +79,7 @@ def query_latest_throughput(topic):
                       LIMIT 1; """ \
                       % topic
     rows = query_rows(querystr)
-    assert len(rows) == 1
+    assert len(rows) == 1, "No rows found for query: %s" % querystr
     return rows[0]["throughput_msg_per_sec"]
 
 

@@ -71,6 +71,26 @@ def store_con_msg(seq, topic, consumer, broker,
     _insert(s)
 
 
+def query_latest_throughput(topic):
+    """ get the latest row for a specified topic and producer  """
+    querystr = """SELECT * FROM ProducedMsg 
+                      WHERE topic = '%s' 
+                      ORDER BY exp_started_at DESC, seq DESC 
+                      LIMIT 1; """ \
+                      % topic
+    rows = query_rows(querystr)
+    assert len(rows) == 1, "No rows found for query: %s" % querystr
+    return rows[0]["throughput_msg_per_sec"]
+
+
+def query_rows(querystr):
+    con = get_connection()
+    cur = get_cursor(con)
+    cur.execute(querystr)
+    rows = cur.fetchall()
+    return rows
+
+
 def _query_pretty(querystr):
     con = get_connection()
     cur = get_cursor(con)

@@ -5,6 +5,7 @@ import datetime
 import parse
 from boto import kinesis
 import time
+import multiprocessing
 
 
 """ General producer and consumer logic for benchmark. 
@@ -235,7 +236,7 @@ def producer(brokertype,
              log_interval=DEFAULT_LOG_INTERVAL,
              exp_started_at=None,
              num_partitions=1,
-	     bulk_size=None):
+	         bulk_size=None):
     """ api for general producer """
     # initialize broker and logger
     broker = Broker.create(brokertype, num_partitions, bulk_size=bulk_size)
@@ -263,4 +264,31 @@ def consumer(brokertype,
     # comsumer logic is quite different between the brokers 
     # logging is inside the consume_forever methods
     broker.consume_forever(logger)
+
+
+if __name__ == '__main__':
+    # TODO argparse
+    
+
+    brokertype = 'kafka'
+    bulk_size = 100
+    num_msg = 100000
+    log_interval = 10000
+    num_partitions = 2
+ 
+    # spawn 10 producers
+    num_instances = 10
+
+    def start_instance(instance_id): 
+        print "Started producer %s %d" % (brokertype, instance_id)
+        producer(brokertype, 
+                 num_msg=num_msg/num_instances,
+                 log_interval=log_interval/num_instances,
+                 exp_started_at=datetime.datetime.now(),
+                 num_partitions=num_partitions,
+                 bulk_size=bulk_size,
+                 producer_name="%s_prod_%d" % (brokertype, instance_id))
+    
+    pool = multiprocessing.Pool(num_instances)
+    pool.map(start_instance, range(num_instances))
 

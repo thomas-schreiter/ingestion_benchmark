@@ -126,22 +126,24 @@ class Logger():
 class Broker():
     
     @classmethod
-    def create(cls, brokertype, topic, *args, **kwargs):
+    def create(cls, brokertype, num_partitions, *args, **kwargs):
         brokertype = brokertype.lower()
         if brokertype == 'kafka':
-            return Kafka(topic, *args, **kwargs)
+            return Kafka(num_partitions, *args, **kwargs)
         elif brokertype == 'kinesis':
-            return Kinesis(topic, *args, **kwargs)
+            return Kinesis(num_partitions, *args, **kwargs)
         else:
             assert False
 
 
 class Kafka(Broker):
 
-    def __init__(self, topic, *args, **kwargs):
+    def __init__(self, num_partitions, *args, **kwargs):
+        
         self.con = kafka.KafkaClient(KAFKAHOST)
-        self.topic = topic
         self.client = kafka.SimpleProducer(self.con, async=False)  # FIXME sync vs. async?
+        self.topic = "%dP_3R" % num_partitions
+        print "Set topic to %s" % self.topic
 
     def send_message(self, msg):
         self.client.send_messages(self.topic, str(msg))
@@ -163,18 +165,16 @@ class Kafka(Broker):
 
 
 class Kinesis(Broker):
-    # TODO clean up interface of __init__ and Broker.crate()   
-    def __init__(self, topic, *args, **kwargs):
+
+    def __init__(self, num_partitions, *args, **kwargs):
+        self.brokertype = "kinesis"
         self.con = kinesis.connect_to_region(REGION)
-        try:
-            self.num_shards = kwargs["num_shards"]
-        except:
-            self.num_shards = 1
-	try: 
+        self.num_shards = num_partitions
+        try: 
             self.bulk_size = kwargs["bulk_size"]
-	except:
-	    self.bulk_size = 1
-	self.msg_bulk = []
+        except:
+            self.bulk_size = 1
+        self.msg_bulk = []
         print "Set number of shards to {}".format(self.num_shards)
         self.topic = "{}Shard".format(self.num_shards)
         self._create_stream()
@@ -231,16 +231,15 @@ class Kinesis(Broker):
 
 def producer(brokertype,
              num_msg=DEFAULT_NUM_MSG, 
-             topic=DEFAULT_TOPIC, 
              producer_name=None,
              log_interval=DEFAULT_LOG_INTERVAL,
              exp_started_at=None,
-             num_shards=None,
+             num_partitions=1,
 	     bulk_size=None):
     """ api for general producer """
     # initialize broker and logger
-    broker = Broker.create(brokertype, topic, num_shards=num_shards, bulk_size=bulk_size)
-    logger = Logger('producer', producer_name, brokertype, topic, log_interval, exp_started_at=None)
+    broker = Broker.create(brokertype, num_partitions, bulk_size=bulk_size)
+    logger = Logger('producer', producer_name, brokertype, broker.topic, log_interval, exp_started_at=None)
     
     # bombard the broker with messages
     for seq in range(num_msg):
@@ -250,17 +249,16 @@ def producer(brokertype,
 
 
 def consumer(brokertype,
-             topic=DEFAULT_TOPIC, 
              consumer_name=None,
              consumer_group='default_group',
              log_interval=DEFAULT_LOG_INTERVAL,
              exp_started_at=None,
-             num_shards=None,
+             num_partitions=1,
              bulk_size=1):
     """ api for general consumer """
     # initialize broker and logger
-    broker = Broker.create(brokertype, topic, num_shards=num_shards, bulk_size=bulk_size)
-    logger = Logger('consumer', consumer_name, brokertype, topic, log_interval, exp_started_at=None)
+    broker = Broker.create(brokertype, num_partitions, bulk_size=bulk_size)
+    logger = Logger('consumer', consumer_name, brokertype, broker.topic, log_interval, exp_started_at=None)
    
     # comsumer logic is quite different between the brokers 
     # logging is inside the consume_forever methods

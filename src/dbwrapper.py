@@ -72,15 +72,25 @@ def store_con_msg(seq, topic, consumer, broker,
 
 
 def query_latest_throughput(topic):
-    """ get the latest row for a specified topic and producer  """
-    querystr = """SELECT * FROM ProducedMsg 
-                      WHERE topic = '%s' 
-                      ORDER BY exp_started_at DESC, seq DESC 
-                      LIMIT 1; """ \
-                      % topic
+    """ get the latest throughput for a specified topic """
+    querystr = """
+        SELECT SUM(throughput_msg_per_sec) AS throughput 
+            FROM ProducedMsg p1 
+            JOIN 
+                
+                (SELECT DISTINCT producer, max(seq) AS max_seq, p2.exp_started_at AS exp FROM ProducedMsg p2 
+                    WHERE p2.exp_started_at = 
+                        ( SELECT max(p3.exp_started_at) FROM ProducedMsg p3 
+                            WHERE topic = '%s' ) 
+                    GROUP BY producer LIMIT 20) X   
+                                                
+             ON  p1.producer = X.producer 
+                 AND p1.seq = max_seq 
+                 AND p1.exp_started_at = exp; """ % topic
+
     rows = query_rows(querystr)
     assert len(rows) == 1, "No rows found for query: %s" % querystr
-    return rows[0]["throughput_msg_per_sec"]
+    return rows[0]["throughput"]
 
 
 def query_rows(querystr):

@@ -6,7 +6,7 @@ import parse
 from boto import kinesis
 import time
 import multiprocessing
-
+import argparse
 
 """ General producer and consumer logic for benchmark. 
 
@@ -18,6 +18,9 @@ Use the producer() and consumer() functions
 DEFAULT_TOPIC = "defaulttopic"
 DEFAULT_NUM_MSG = int(1e8)
 DEFAULT_LOG_INTERVAL = int(1e5)
+DEFAULT_POOLSIZE = 1
+DEFAULT_BULKSIZE = 100
+DEFAULT_NUM_PARTITIONS = 1
 
 #### kafka config ######
 KAFKAHOST = "52.8.85.143:9092"
@@ -172,9 +175,9 @@ class Kinesis(Broker):
         self.con = kinesis.connect_to_region(REGION)
         self.num_shards = num_partitions
         try: 
-            self.bulk_size = kwargs["bulk_size"]
+            self.bulksize = kwargs["bulksize"]
         except:
-            self.bulk_size = 1
+            self.bulksize = 1
         self.msg_bulk = []
         print "Set number of shards to {}".format(self.num_shards)
         self.topic = "{}Shard".format(self.num_shards)
@@ -199,7 +202,7 @@ class Kinesis(Broker):
     def send_message(self, msg):
         record = {'Data': str(msg), 'PartitionKey': str(hash(msg.seq))}
         self.msg_bulk.append(record)
-        if len(self.msg_bulk) >= self.bulk_size:    
+        if len(self.msg_bulk) >= self.bulksize:    
             print "Sending %d messages to Kinesis Steam %s ..." % (len(self.msg_bulk), self.topic)
             self.con.put_records(self.msg_bulk, self.topic)
             self.msg_bulk = []             
@@ -236,10 +239,10 @@ def producer(brokertype,
              log_interval=DEFAULT_LOG_INTERVAL,
              exp_started_at=None,
              num_partitions=1,
-	         bulk_size=None):
+	         bulksize=None):
     """ api for general producer """
     # initialize broker and logger
-    broker = Broker.create(brokertype, num_partitions, bulk_size=bulk_size)
+    broker = Broker.create(brokertype, num_partitions, bulksize=bulksize)
     logger = Logger('producer', producer_name, brokertype, broker.topic, log_interval, exp_started_at=None)
     
     # bombard the broker with messages
@@ -255,10 +258,10 @@ def consumer(brokertype,
              log_interval=DEFAULT_LOG_INTERVAL,
              exp_started_at=None,
              num_partitions=1,
-             bulk_size=1):
+             bulksize=1):
     """ api for general consumer """
     # initialize broker and logger
-    broker = Broker.create(brokertype, num_partitions, bulk_size=bulk_size)
+    broker = Broker.create(brokertype, num_partitions, bulksize=bulksize)
     logger = Logger('consumer', consumer_name, brokertype, broker.topic, log_interval, exp_started_at=None)
    
     # comsumer logic is quite different between the brokers 
@@ -267,28 +270,53 @@ def consumer(brokertype,
 
 
 if __name__ == '__main__':
-    # TODO argparse
-    
+    # argparse
+    parser = argparse.ArgumentParser(description='Producer/Consumer for the benchmark.')
+    parser.add_argument('prod_or_con', choices=['producer', 'consumer'], 
+        help='Choose "producer" or "consumer".')
+    parser.add_argument('brokertype', choices=['kafka', 'kinesis'],
+        help='Brokertype')
+    parser.add_argument('--num_msg', '-m', type=int, default=DEFAULT_NUM_MSG,
+        help='number of total messages')
+    parser.add_argument('--log_interval', '-l', type=int, default=DEFAULT_LOG_INTERVAL,
+        help='interval [in #msg] after which a throughput is logged to the database')
+    parser.add_argument('--num_partitions', '-s', type=int, default=DEFAULT_NUM_PARTITIONS,
+        help='number of partitions/shards')
+    parser.add_argument('--bulksize', '-b', type=int, default=DEFAULT_BULKSIZE,
+        help='number of messages that are sent in bulk to Kinesis')
+    parser.add_argument('--poolsize', '-p', type=int, default=DEFAULT_POOLSIZE,
+        help='number of producers/consumers that work in parallel')
 
-    brokertype = 'kafka'
-    bulk_size = 100
-    num_msg = 100000
-    log_interval = 10000
-    num_partitions = 2
- 
-    # spawn 10 producers
-    num_instances = 10
+    args = parser.parse_args()
+    print args
 
-    def start_instance(instance_id): 
-        print "Started producer %s %d" % (brokertype, instance_id)
-        producer(brokertype, 
-                 num_msg=num_msg/num_instances,
-                 log_interval=log_interval/num_instances,
+    def start_producers(instance_id): 
+        print "Started producer %s %d" % (args.brokertype, instance_id)
+        producer(brokertype=args.brokertype, 
+                 num_msg=args.num_msg/args.poolsize,
+                 log_interval=args.log_interval/args.poolsize,
                  exp_started_at=datetime.datetime.now(),
-                 num_partitions=num_partitions,
-                 bulk_size=bulk_size,
-                 producer_name="%s_prod_%d" % (brokertype, instance_id))
+                 num_partitions=args.num_partitions,
+                 bulksize=args.bulksize,
+                 producer_name="%s_prod_%d" % (args.brokertype, instance_id))
     
-    pool = multiprocessing.Pool(num_instances)
-    pool.map(start_instance, range(num_instances))
+    def start_consumer(instance_id): 
+        print "Started consumer %s %d" % (args.brokertype, instance_id)
+        consumer(brokertype=args.brokertype, 
+                 log_interval=args.log_interval/args.poolsize,
+                 exp_started_at=datetime.datetime.now(),
+                 num_partitions=args.num_partitions,
+                 bulksize=args.bulksize,
+                 producer_name="%s_prod_%d" % (args.brokertype, instance_id))
+
+    pool = multiprocessing.Pool(args.poolsize)
+    if args.prod_or_con == 'producer':
+        start_instances = start_producers
+    elif args.prod_or_con == 'consumer':
+        start_instances = start_consumers
+    else: 
+        assert False
+    pool.map(start_instances, range(args.poolsize))
+
+
 

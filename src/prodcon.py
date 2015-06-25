@@ -203,7 +203,6 @@ class Kinesis(Broker):
         record = {'Data': str(msg), 'PartitionKey': str(hash(msg.seq))}
         self.msg_bulk.append(record)
         if len(self.msg_bulk) >= self.bulksize:    
-            print "Sending %d messages to Kinesis Steam %s ..." % (len(self.msg_bulk), self.topic)
             self.con.put_records(self.msg_bulk, self.topic)
             self.msg_bulk = []             
 

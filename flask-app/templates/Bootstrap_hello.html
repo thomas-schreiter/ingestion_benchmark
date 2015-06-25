@@ -56,8 +56,12 @@
       <div class="starter-template">
         <h1>Bootstrap starter template</h1>
         <p class="lead">Use this document as a way to quickly start any new project.<br> All you get is this text and a mostly barebones HTML document.</p>
+        <p>Hello!</p>
       </div>
-
+<script>
+var foo = {{ some_name }}
+console.log(foo)
+</script>
     </div><!-- /.container -->
 
     <div id="container_hc" style="width:100%; height:400px;"></div>
@@ -97,7 +101,7 @@
                 data: [1150, 1170, 1130, 1150],
                 color: '#3a3a39'
             }, {
-                name: 'Kinesis',
+                name: foo,
                 data: [6000, 5000, 4000, 3000],
                 color: '#D68B00'
             }]

@@ -96,11 +96,17 @@
             },
             series: [{
                 name: 'Kafka',
-                data: [ {{ kafka_throughput[0] }}, {{ kafka_throughput[1] }}, {{ kafka_throughput[2] }}, {{ kafka_throughput[3]}} ],
+                data: [ {{ kafka_throughput[0] }}, 
+                        {{ kafka_throughput[1] }}, 
+                        {{ kafka_throughput[2] }}, 
+                        {{ kafka_throughput[3] }} ],
                 color: '#3a3a39'
             }, {
                 name: 'Kinesis',
-                data: [6000, 5000, 4000, 3000],
+                data: [{{ kinesis_throughput[0] }}, 
+                       {{ kinesis_throughput[1] }}, 
+                       {{ kinesis_throughput[2] }}, 
+                       {{ kinesis_throughput[3] }} ],
                 color: '#D68B00'
             }]
         });

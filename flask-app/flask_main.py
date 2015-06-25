@@ -34,7 +34,7 @@ def con():
 @app.route("/bootstrap_hello")
 def bootstrap_hello():
     """ show a super simple example of a bootstrapped page """
-    return render_template('Bootstrap_hello.html', some_name="Insight")
+    return render_template('Bootstrap_hello.html', name="Insight", avalue=[1150, 1170, 1130, 1150])
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', debug=True)

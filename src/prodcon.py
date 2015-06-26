@@ -151,7 +151,10 @@ class Kafka(Broker):
         print "Set topic to %s" % self.topic
 
     def send_message(self, msg):
-        self.client.send_messages(self.topic, str(msg))
+        if self.topic != 'kafka_64prod':  # ugly hack, since this kafka topic is broken
+            self.client.send_messages(self.topic, str(msg))
+        else:
+            self.client.send_messages('kafka_64prod2', str(msg))
 
     def consume_forever(self, logger): 
         """ consumer process receiving messages from the brokers """

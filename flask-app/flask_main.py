@@ -9,7 +9,6 @@ import string
 
 app = Flask(__name__)
 
-@app.route("/")
 @app.route("/index")
 def hello():
     return "Hello World!"
@@ -33,6 +32,7 @@ def con():
     return result
 
 
+@app.route("/")
 @app.route("/bootstrap_hello")
 def bootstrap_hello():
     """ show a super simple example of a bootstrapped page """

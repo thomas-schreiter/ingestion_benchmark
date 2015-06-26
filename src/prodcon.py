@@ -154,7 +154,9 @@ class Kafka(Broker):
         if self.topic == 'kafka_64prod':  # DEBT ugly workarounds, since this kafka topic is broken and time is running out
             self.client.send_messages('kafka_64prod2', str(msg))
         elif self.topic == 'kafka_2prod':
-            self.client.send_messages('kafka_2prod3', str(msg))
+            self.client.send_messages('kafka_2prod4', str(msg))
+        elif self.topic == 'kafka_8prod':
+            self.client.send_messages('kafka_8prod2', str(msg))
         else:
             self.client.send_messages(self.topic, str(msg))
 

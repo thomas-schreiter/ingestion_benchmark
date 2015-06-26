@@ -23,6 +23,7 @@ def prod():
     result = string.replace(str(tablestr),'\n','<br>')
     return result
 
+
 @app.route("/con")
 def con():
     """ show whole ConsumedMsg table on the web """
@@ -31,11 +32,13 @@ def con():
     result = string.replace(str(tablestr),'\n','<br>')
     return result
 
+
 @app.route("/bootstrap_hello")
 def bootstrap_hello():
     """ show a super simple example of a bootstrapped page """
-    kafka_throughput =   [ dbwrapper.query_latest_throughput("%dP_3R"  % i) for i in [1,2,3,4] ]
-    kinesis_throughput = [ dbwrapper.query_latest_throughput("%dShard" % i) for i in [1,2,3,4] ]
+    kafka_throughput =   [ dbwrapper.query_latest_throughput(  "kafka_%dprod" % i) for i in [1,4,16] ]
+    kinesis_throughput = [ dbwrapper.query_latest_throughput("kinesis_%dprod" % i) for i in [1,4,16] ]
+
     return render_template('Bootstrap_hello.html', 
                            kafka_throughput=kafka_throughput,
                            kinesis_throughput=kinesis_throughput)

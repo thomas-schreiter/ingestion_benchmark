@@ -3,7 +3,7 @@ import datetime
 import prettytable
 
 USER = 'ubuntu'
-HOST = '52.8.205.143'
+HOST = '52.8.162.106'
 DATABASE = 'insight'
 PW = 'geheim'  # please don't steal the secret password
 

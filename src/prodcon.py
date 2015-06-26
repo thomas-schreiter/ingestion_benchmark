@@ -130,9 +130,9 @@ class Logger():
 class Broker():
     
     @classmethod
-    def create(cls, brokertype, num_partitions, topic, *args, **kwargs):
+    def create(cls, brokertype, num_partitions, num_producers, *args, **kwargs):
         brokertype = brokertype.lower()
-        topic = '%s_%dprod' % (brokertype, num_partitions)
+        topic = '%s_%dprod' % (brokertype, num_producers)
         if brokertype == 'kafka':
             return Kafka(num_partitions, topic, *args, **kwargs)
         elif brokertype == 'kinesis':

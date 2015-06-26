@@ -19,7 +19,7 @@ DEFAULT_TOPIC = "defaulttopic"
 DEFAULT_NUM_MSG = int(1e8)
 DEFAULT_LOG_INTERVAL = int(1e5)
 DEFAULT_POOLSIZE = 1
-DEFAULT_BULKSIZE = 100
+DEFAULT_BULKSIZE = 500
 DEFAULT_NUM_PARTITIONS = 1
 
 #### kafka config ######
@@ -130,23 +130,24 @@ class Logger():
 class Broker():
     
     @classmethod
-    def create(cls, brokertype, num_partitions, *args, **kwargs):
+    def create(cls, brokertype, num_partitions, topic, *args, **kwargs):
         brokertype = brokertype.lower()
+        topic = '%s_%dprod' % (brokertype, num_partitions)
         if brokertype == 'kafka':
-            return Kafka(num_partitions, *args, **kwargs)
+            return Kafka(num_partitions, topic, *args, **kwargs)
         elif brokertype == 'kinesis':
-            return Kinesis(num_partitions, *args, **kwargs)
+            return Kinesis(num_partitions, topic, *args, **kwargs)
         else:
             assert False
 
 
 class Kafka(Broker):
 
-    def __init__(self, num_partitions, *args, **kwargs):
+    def __init__(self, num_partitions, topic, *args, **kwargs):
         
         self.con = kafka.KafkaClient(KAFKAHOST)
-        self.client = kafka.SimpleProducer(self.con, async=False)  # FIXME sync vs. async?
-        self.topic = "%dP_3R" % num_partitions
+        self.client = kafka.SimpleProducer(self.con, async=False)
+        self.topic = topic
         print "Set topic to %s" % self.topic
 
     def send_message(self, msg):
@@ -170,7 +171,7 @@ class Kafka(Broker):
 
 class Kinesis(Broker):
 
-    def __init__(self, num_partitions, *args, **kwargs):
+    def __init__(self, num_partition, topic, *args, **kwargs):
         self.brokertype = "kinesis"
         self.con = kinesis.connect_to_region(REGION)
         self.num_shards = num_partitions
@@ -179,8 +180,7 @@ class Kinesis(Broker):
         except:
             self.bulksize = 1
         self.msg_bulk = []
-        print "Set number of shards to {}".format(self.num_shards)
-        self.topic = "{}Shard".format(self.num_shards)
+        self.topic = topic
         self._create_stream()
 
     def _create_stream(self):
@@ -238,10 +238,11 @@ def producer(brokertype,
              log_interval=DEFAULT_LOG_INTERVAL,
              exp_started_at=None,
              num_partitions=1,
-	         bulksize=None):
+	         bulksize=None,
+             num_producers=1):
     """ api for general producer """
     # initialize broker and logger
-    broker = Broker.create(brokertype, num_partitions, bulksize=bulksize)
+    broker = Broker.create(brokertype, num_partitions, num_producers, bulksize=bulksize)
     logger = Logger('producer', producer_name, brokertype, broker.topic, log_interval, exp_started_at=None)
     
     # bombard the broker with messages
@@ -257,10 +258,11 @@ def consumer(brokertype,
              log_interval=DEFAULT_LOG_INTERVAL,
              exp_started_at=None,
              num_partitions=1,
-             bulksize=1):
+             bulksize=1,
+             num_producers=1):
     """ api for general consumer """
     # initialize broker and logger
-    broker = Broker.create(brokertype, num_partitions, bulksize=bulksize)
+    broker = Broker.create(brokertype, num_partitions, num_producers, bulksize=bulksize)
     logger = Logger('consumer', consumer_name, brokertype, broker.topic, log_interval, exp_started_at=None)
    
     # comsumer logic is quite different between the brokers 
@@ -297,7 +299,8 @@ if __name__ == '__main__':
                  exp_started_at=datetime.datetime.now(),
                  num_partitions=args.num_partitions,
                  bulksize=args.bulksize,
-                 producer_name="%s_prod_%d" % (args.brokertype, instance_id))
+                 producer_name="%s_prod_%d" % (args.brokertype, instance_id),
+                 num_producers=args.poolsize)
     
     def start_consumer(instance_id): 
         print "Started consumer %s %d" % (args.brokertype, instance_id)
@@ -306,7 +309,8 @@ if __name__ == '__main__':
                  exp_started_at=datetime.datetime.now(),
                  num_partitions=args.num_partitions,
                  bulksize=args.bulksize,
-                 producer_name="%s_prod_%d" % (args.brokertype, instance_id))
+                 producer_name="%s_prod_%d" % (args.brokertype, instance_id),
+                 num_producers=args.poolsize)
 
     pool = multiprocessing.Pool(args.poolsize)
     if args.prod_or_con == 'producer':

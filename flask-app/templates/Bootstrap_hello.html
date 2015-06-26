@@ -39,13 +39,13 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="http://getbootstrap.com/examples/starter-template/#">Ingestion Comparison</a>
+          <a class="navbar-brand" href="/#">Ingestion Comparison</a>
         </div>
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
-            <li class="active"><a href="http://getbootstrap.com/examples/starter-template/#">Home</a></li>
-            <li><a href="http://getbootstrap.com/examples/starter-template/#about">About</a></li>
-            <li><a href="http://getbootstrap.com/examples/starter-template/#contact">Contact</a></li>
+            <li class="active"><a href="/#">Home</a></li>
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#contact">Contact</a></li>
           </ul>
         </div><!--/.nav-collapse -->
       </div>
@@ -59,6 +59,7 @@
         How fast can data be put into Kinesis/Kafka 
         if all producers reside on one node?
       </div>
+
 <script>
 </script>
     </div><!-- /.container -->
@@ -81,39 +82,58 @@
     <script>
       $(function () { 
         $('#container_hc').highcharts({
-            chart: {
+           chart: {
                 type: 'column'
             },
             title: {
                 text: 'Throughput'
             },
+            tooltip: {
+                valueSuffix: 'msg/sec',
+                valueDecimals: 0
+            },
+            plotOptions: {
+                series: {
+                    marker: {
+                        radius: 6
+                    }
+                }
+            },
+            legend: {
+                layout: 'vertical',
+                align: 'right',
+                verticalAlign: 'middle',
+                borderWidth: 0
+            },
             xAxis: {
-                categories: ['1 producer', 
-                             '4 producers', 
-                              '16 producers'],
+                categories: ['1', 
+                             '2', 
+                             '3', 
+                             '4', 
+                             '5', 
+                             '6', 
+                             '7', 
+                             '8'], 
+                title: {
+                    text: 'Number of parallel producers'
+                }
             },
             yAxis: {
                 title: {
-                    text: 'Throughput [#msg/sec]'
+                    text: 'Throughput [msg/sec]'
                 }
             },
             series: [{
                 name: 'Kafka',
-                data: [ {{ kafka_throughput[0] }}, 
-                        {{ kafka_throughput[1] }}, 
-                        {{ kafka_throughput[2] }} ], 
+                data: {{ kafka_throughput }}, 
                 color: '#3a3a39'
             }, {
                 name: 'Kinesis',
-                data: [{{ kinesis_throughput[0] }}, 
-                       {{ kinesis_throughput[1] }}, 
-                       {{ kinesis_throughput[2] }} ], 
+                data: {{ kinesis_throughput }}, 
                 color: '#D68B00'
             }]
         });
       });
     </script>
-
-  
 
 </body></html>

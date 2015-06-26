@@ -82,26 +82,45 @@
     <script>
       $(function () { 
         $('#container_hc').highcharts({
-            chart: {
+           chart: {
                 type: 'column'
             },
             title: {
                 text: 'Throughput'
             },
+            tooltip: {
+                valueSuffix: 'msg/sec',
+                valueDecimals: 0
+            },
+            plotOptions: {
+                series: {
+                    marker: {
+                        radius: 6
+                    }
+                }
+            },
+            legend: {
+                layout: 'vertical',
+                align: 'right',
+                verticalAlign: 'middle',
+                borderWidth: 0
+            },
             xAxis: {
-                categories: ['1 producer', 
-                             '2 producers', 
-                             '3 producers', 
-                             '4 producers', 
-                             '5 producers', 
-                             '6 producers', 
-                             '7 producers', 
-                             '8 producers', 
-                             '16 producers'],
+                categories: ['1', 
+                             '2', 
+                             '3', 
+                             '4', 
+                             '5', 
+                             '6', 
+                             '7', 
+                             '8'], 
+                title: {
+                    text: 'Number of parallel producers'
+                }
             },
             yAxis: {
                 title: {
-                    text: 'Throughput [#msg/sec]'
+                    text: 'Throughput [msg/sec]'
                 }
             },
             series: [{

@@ -36,7 +36,7 @@ def con():
 @app.route("/bootstrap_hello")
 def bootstrap_hello():
     """ show a super simple example of a bootstrapped page """
-    poolsize = [1, 2, 3, 4, 5, 6, 7, 8, 16]
+    poolsize = [1, 2, 3, 4, 5, 6, 7, 8]
     kafka_throughput =   [ dbwrapper.query_latest_throughput(  "kafka_%dprod" % i) for i in poolsize ]
     kinesis_throughput = [ dbwrapper.query_latest_throughput("kinesis_%dprod" % i) for i in poolsize ]
 

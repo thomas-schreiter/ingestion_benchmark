@@ -1,11 +1,15 @@
 import MySQLdb as mdb
 import datetime
 import prettytable
+import os
 
 USER = 'ubuntu'
 HOST = '52.8.162.106'
 DATABASE = 'insight'
-PW = 'geheim'  # please don't steal the secret password
+
+PWFILE = os.path.join(os.path.expanduser("~"), ".mysqlpassword")
+with open(PWFILE, "r") as pwfile:
+    PW = pwfile.readline().strip()
 
 
 def get_connection():

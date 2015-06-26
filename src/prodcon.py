@@ -174,7 +174,7 @@ class Kafka(Broker):
 
 class Kinesis(Broker):
 
-    def __init__(self, num_partition, topic, *args, **kwargs):
+    def __init__(self, num_partitions, topic, *args, **kwargs):
         self.brokertype = "kinesis"
         self.con = kinesis.connect_to_region(REGION)
         self.num_shards = num_partitions

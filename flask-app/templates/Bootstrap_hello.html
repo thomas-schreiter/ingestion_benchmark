@@ -57,7 +57,7 @@
         <h1>Kafka vs. Kinesis</h1>
         <p class="lead">Research Question:<br>  
         How fast can data be put into Kinesis/Kafka 
-        if all producers reside on one node?
+        if all producers run on one node?
       </div>
 
 <script>
@@ -65,7 +65,7 @@
     </div><!-- /.container -->
 
     <div id="container_hc" style="width:100%; height:400px;"></div>
-
+    <button id="button" class="autocompare">Show all</button>
 
     <!-- Bootstrap core JavaScript
     ================================================== -->
@@ -125,15 +125,24 @@
             },
             series: [{
                 name: 'Kafka',
-                data: {{ kafka_throughput }}, 
+                data: [ {{ kafka_throughput[0] }},   0, 0, 0, 0, 0, 0, 0 ], 
                 color: '#3a3a39'
             }, {
                 name: 'Kinesis',
-                data: {{ kinesis_throughput }}, 
+                data: [ {{ kinesis_throughput[0] }}, 0, 0, 0, 0, 0, 0, 0 ], 
                 color: '#D68B00'
             }]
         });
-      });
+
+        // Button handler
+        $('#button').click(function () {
+            var chart = $('#container_hc').highcharts();
+            chart.series[0].setData( {{ kafka_throughput }} );
+            chart.series[1].setData( {{ kinesis_throughput }} );
+            this.disabled = true;
+            });
+
+    });
     </script>
 
 </body></html>

@@ -149,9 +149,19 @@
     <div class="test42"></div>
     <script>
         var x = 17;
-        $('.test42').html(x)
+        $.ajax({
+            type: "GET",
+            url: "/get42",
+            data: 0,
+            success: function(my_value) {
+                x = my_value;
+                $('.test42').html(x)
+            }
+        })
 
-    
+
+        $('.test42').html('43')
+
     </script>
 
 

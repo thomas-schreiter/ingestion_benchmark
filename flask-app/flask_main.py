@@ -44,6 +44,12 @@ def bootstrap_hello():
                            kafka_throughput=kafka_throughput,
                            kinesis_throughput=kinesis_throughput)
 
+
+@app.route("/get42")
+def get42():
+    return '42' 
+
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', debug=True)
     

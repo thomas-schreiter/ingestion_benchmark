@@ -65,6 +65,7 @@
 
     <div id="container_hc" style="width:100%; height:400px;"></div>
     <button id="button" class="autocompare">Show all</button>
+    <div class="test42"></div>
 
     <!-- Bootstrap core JavaScript
     ================================================== -->
@@ -81,8 +82,25 @@
     <script>
       $(function () { 
         $('#container_hc').highcharts({
-           chart: {
-                type: 'column'
+            chart: {
+                type: 'column',
+                events: {
+                    load: function() {
+                        var series = this.series;
+                        function foo() {
+                            $.ajax({
+                                type: "GET",
+                                url: "/get_throughput_1prod",
+                                data: 0,
+                                success: function(jsoned) {
+                                    series[0].data[0].update(JSON.parse(jsoned["kafka"]));
+                                    series[1].data[0].update(JSON.parse(jsoned["kinesis"]));
+                                }
+                            });
+                        }
+                        setInterval(foo, 2000);
+                    }    
+                }
             },
             title: {
                 text: 'Throughput'
@@ -105,14 +123,7 @@
                 borderWidth: 0
             },
             xAxis: {
-                categories: ['1', 
-                             '2', 
-                             '3', 
-                             '4', 
-                             '5', 
-                             '6', 
-                             '7', 
-                             '8'], 
+                categories: ['1', '2', '3', '4', '5', '6', '7', '8'], 
                 title: {
                     text: 'Number of parallel producers'
                 }
@@ -132,16 +143,17 @@
                 color: '#D68B00'
             }]
         });
-
+        
         // Button handler
         $('#button').click(function () {
             var chart = $('#container_hc').highcharts();
             chart.series[0].setData( {{ kafka_throughput }} );
             chart.series[1].setData( {{ kinesis_throughput }} );
             this.disabled = true;
-            });
-
+        });
     });
     </script>
+
+
 
 </body></html>

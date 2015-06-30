@@ -2,10 +2,12 @@ import sys
 import os
 sys.path.append(os.path.join('..', 'src'))
 
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify
 import dbwrapper
 import prettytable
 import string
+import datetime
+
 
 app = Flask(__name__)
 
@@ -43,6 +45,14 @@ def bootstrap_hello():
     return render_template('Bootstrap_hello.html', 
                            kafka_throughput=kafka_throughput,
                            kinesis_throughput=kinesis_throughput)
+
+
+@app.route("/get_throughput_1prod")
+def get42():
+    kafka = dbwrapper.query_latest_throughput("kafka_1prod")
+    kinesis = dbwrapper.query_latest_throughput("kinesis_1prod")
+    return jsonify(kafka=kafka, kinesis=kinesis) #datetime.datetime.now().strftime("%S00"), '30'
+
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', debug=True)

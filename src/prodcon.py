@@ -149,16 +149,28 @@ class Kafka(Broker):
         self.client = kafka.SimpleProducer(self.con, async=False)
         self.topic = topic
         print "Set topic to %s" % self.topic
+        try:
+            self.bulksize = kwargs["bulksize"]
+        except:
+            self.bulksize = 1
+        self.msg_bulk = []
 
     def send_message(self, msg):
+        self.msg_bulk.append(msg)
+        if len(self.msg_bulk) >= self.bulksize:    
+            self._send_bulk()
+            self.msg_bulk = []             
+        
+    def _send_bulk(self):
+        msg_list = map(str, self.msg_bulk)
         if self.topic == 'kafka_64prod':  # DEBT ugly workarounds, since this kafka topic is broken and time is running out
-            self.client.send_messages('kafka_64prod2', str(msg))
+            self.client.send_messages('kafka_64prod2', *msg_list)
         elif self.topic == 'kafka_2prod':
-            self.client.send_messages('kafka_2prod4', str(msg))
+            self.client.send_messages('kafka_2prod4', *msg_list)
         elif self.topic == 'kafka_8prod':
-            self.client.send_messages('kafka_8prod2', str(msg))
+            self.client.send_messages('kafka_8prod2', *msg_list)
         else:
-            self.client.send_messages(self.topic, str(msg))
+            self.client.send_messages(self.topic, *msg_list)
 
     def consume_forever(self, logger): 
         """ consumer process receiving messages from the brokers """
@@ -166,7 +178,6 @@ class Kafka(Broker):
         consumer_group='default_group'
         self.consumer = kafka.SimpleConsumer(self.con, consumer_group, self.topic)
 
- 	# TODO check out self.con.get_messages(count=1000) to send messages in bulk
         # read from Kafka
         for raw in self.consumer:
             consumed_at = datetime.datetime.now()

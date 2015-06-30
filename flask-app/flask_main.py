@@ -6,6 +6,8 @@ from flask import Flask, render_template
 import dbwrapper
 import prettytable
 import string
+import datetime
+
 
 app = Flask(__name__)
 
@@ -47,7 +49,7 @@ def bootstrap_hello():
 
 @app.route("/get42")
 def get42():
-    return '42' 
+    return datetime.datetime.now().strftime("%H:%M:%S")
 
 
 if __name__ == "__main__":

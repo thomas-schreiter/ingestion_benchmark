@@ -90,7 +90,7 @@
                         function foo() {
                             $.ajax({
                                 type: "GET",
-                                url: "/get42",
+                                url: "/get_throughput_1prod",
                                 data: 0,
                                 success: function(jsoned) {
                                     series[0].data[0].update(JSON.parse(jsoned["kafka"]));

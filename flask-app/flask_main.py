@@ -47,9 +47,12 @@ def bootstrap_hello():
                            kinesis_throughput=kinesis_throughput)
 
 
-@app.route("/get42")
+@app.route("/get_throughput_1prod")
 def get42():
-    return jsonify(kafka=42, kinesis=17) #datetime.datetime.now().strftime("%S00"), '30'
+    kafka = dbwrapper.query_latest_throughput("kafka_1prod")
+    kinesis = dbwrapper.query_latest_throughput("kinesis_1prod")
+    return jsonify(kafka=kafka, kinesis=kinesis) #datetime.datetime.now().strftime("%S00"), '30'
+
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', debug=True)

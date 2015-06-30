@@ -49,7 +49,7 @@ def bootstrap_hello():
 
 @app.route("/get42")
 def get42():
-    return datetime.datetime.now().strftime("%H:%M:%S")
+    return datetime.datetime.now().strftime("%S00")
 
 
 if __name__ == "__main__":

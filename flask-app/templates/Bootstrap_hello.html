@@ -92,8 +92,9 @@
                                 type: "GET",
                                 url: "/get42",
                                 data: 0,
-                                success: function(my_value) {
-                                    series[0].data[0].update(Number(my_value));
+                                success: function(jsoned) {
+                                    series[0].data[0].update(JSON.parse(jsoned["kafka"]));
+                                    series[1].data[0].update(JSON.parse(jsoned["kinesis"]));
                                 }
                             });
                         }

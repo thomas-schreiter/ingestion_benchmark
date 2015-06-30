@@ -2,7 +2,7 @@ import sys
 import os
 sys.path.append(os.path.join('..', 'src'))
 
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify
 import dbwrapper
 import prettytable
 import string
@@ -49,8 +49,7 @@ def bootstrap_hello():
 
 @app.route("/get42")
 def get42():
-    return datetime.datetime.now().strftime("%S00")
-
+    return jsonify(kafka=42, kinesis=17) #datetime.datetime.now().strftime("%S00"), '30'
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', debug=True)

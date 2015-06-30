@@ -86,14 +86,14 @@
                 type: 'column',
                 events: {
                     load: function() {
-                        var series = this.series[0];
+                        var series = this.series;
                         function foo() {
                             $.ajax({
                                 type: "GET",
                                 url: "/get42",
                                 data: 0,
                                 success: function(my_value) {
-                                    series.setData([ Number(my_value), 0, 0, 0, 0, 0, 0, 0]);
+                                    series[0].data[0].update(Number(my_value));
                                 }
                             });
                         }

@@ -264,11 +264,13 @@ def producer(brokertype,
     logger = Logger('producer', producer_name, brokertype, broker.topic, log_interval, exp_started_at=None)
     
     # bombard the broker with messages
-    for seq in range(num_msg):
+    seq = 0
+    while seq < num_msg:
+    #for seq in range(num_msg):
         msg = Message(seq, producer_name)
         broker.send_message(msg)
         logger.log(msg, msg.created_at)
-
+        seq += 1
 
 def consumer(brokertype,
              consumer_name=None,

@@ -295,9 +295,9 @@ if __name__ == '__main__':
         help='Choose "producer" or "consumer".')
     parser.add_argument('brokertype', choices=['kafka', 'kinesis'],
         help='Brokertype')
-    parser.add_argument('--num_msg', '-m', type=int, default=DEFAULT_NUM_MSG,
+    parser.add_argument('--num_msg', '-m', type=long, default=DEFAULT_NUM_MSG,
         help='number of total messages')
-    parser.add_argument('--log_interval', '-l', type=int, default=DEFAULT_LOG_INTERVAL,
+    parser.add_argument('--log_interval', '-l', type=long, default=DEFAULT_LOG_INTERVAL,
         help='interval [in #msg] after which a throughput is logged to the database')
     parser.add_argument('--num_partitions', '-s', type=int, default=DEFAULT_NUM_PARTITIONS,
         help='number of partitions/shards')
